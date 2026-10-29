@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edusense_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./edusense.db
+      - PRESENCE_THRESHOLD_SECONDS=60.0
+      - ALLOWED_ORIGINS=*
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - GROQ_MODEL=${GROQ_MODEL:-llama-3.3-70b-versatile}
+    volumes:
+      - ./data:/app/backend/data
+
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edusense_streamlit
+    command: streamlit run /app/streamlit_app/dashboard.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    depends_on:
+      - backend
+    environment:
+      - BACKEND_API_URL=http://backend:8000
